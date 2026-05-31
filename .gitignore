@@ -1,0 +1,16 @@
+# React
+client/node_modules
+client/dist
+
+# Spring Boot
+backend/target
+
+# IDE
+.vscode
+.idea
+
+# Environment
+.env
+
+# Logs
+*.log
