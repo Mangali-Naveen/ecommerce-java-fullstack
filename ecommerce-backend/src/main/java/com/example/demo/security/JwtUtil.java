@@ -2,6 +2,7 @@ package com.example.demo.security;
 
 import java.security.Key;
 import java.util.Date;
+import io.jsonwebtoken.Claims;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -32,5 +33,24 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + 3600000))
                 .signWith(KEY)
                 .compact();
+    }
+    
+    public static Claims extractClaims(String token) {
+
+        return Jwts.parser()
+                .verifyWith((javax.crypto.SecretKey) KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public static boolean validateToken(String token) {
+
+        try {
+            extractClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
