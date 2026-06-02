@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,5 +20,24 @@ public class ProductController {
             @RequestBody ProductRequest request) {
 
         return productService.addProduct(request);
+    }
+    
+    @GetMapping
+    public List<Product> getAllProducts() {
+        return productService.getAllProducts();
+    }
+    
+    @PutMapping("/{id}")
+    public Product updateProduct(
+            @PathVariable Long id,
+            @RequestBody ProductRequest request) {
+
+        return productService.updateProduct(id, request);
+    }
+    
+    @DeleteMapping("/{id}")
+    public String deleteProduct(@PathVariable Long id) {
+
+        return productService.deleteProduct(id);
     }
 }
