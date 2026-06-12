@@ -68,9 +68,18 @@ public class AuthService {
                 user.getRole(),
                 user.getUserName());
 
+        java.util.Map<String, Object> userMap = java.util.Map.of(
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "role", user.getRole(),
+                "userName", user.getUserName()
+        );
+
         return new AuthResponse(
                 true,
                 "Logged in successfully",
-                token);
+                token,
+                userMap);
+
     }
 }

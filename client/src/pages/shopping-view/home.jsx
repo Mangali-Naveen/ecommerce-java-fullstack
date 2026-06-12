@@ -77,6 +77,9 @@ function ShoppingHome() {
   }
 
   function handleAddtoCart(getCurrentProductId) {
+    console.log("HOME PAGE ADD TO CART");
+    console.log("USER ID SENT =", 1);
+    console.log("PRODUCT ID SENT =", getCurrentProductId);
     dispatch(
       addToCart({
         userId: user?.id,
@@ -91,6 +94,7 @@ function ShoppingHome() {
         });
       }
     });
+
   }
 
   useEffect(() => {
@@ -125,14 +129,13 @@ function ShoppingHome() {
       <div className="relative w-full h-[600px] overflow-hidden">
         {featureImageList && featureImageList.length > 0
           ? featureImageList.map((slide, index) => (
-              <img
-                src={slide?.image}
-                key={index}
-                className={`${
-                  index === currentSlide ? "opacity-100" : "opacity-0"
+            <img
+              src={slide?.image}
+              key={index}
+              className={`${index === currentSlide ? "opacity-100" : "opacity-0"
                 } absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000`}
-              />
-            ))
+            />
+          ))
           : null}
         <Button
           variant="outline"
@@ -211,12 +214,12 @@ function ShoppingHome() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {productList && productList.length > 0
               ? productList.map((productItem) => (
-                  <ShoppingProductTile
-                    handleGetProductDetails={handleGetProductDetails}
-                    product={productItem}
-                    handleAddtoCart={handleAddtoCart}
-                  />
-                ))
+                <ShoppingProductTile
+                  handleGetProductDetails={handleGetProductDetails}
+                  product={productItem}
+                  handleAddtoCart={handleAddtoCart}
+                />
+              ))
               : null}
           </div>
         </div>

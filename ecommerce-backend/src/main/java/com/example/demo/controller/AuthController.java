@@ -18,8 +18,12 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public String registerUser(@RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
+        String result = authService.register(request);
+        if ("Registration successful".equals(result)) {
+            return ResponseEntity.ok(java.util.Map.of("success", true, "message", result));
+        }
+        return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "message", result));
     }
     
     @PostMapping("/login")
@@ -29,4 +33,10 @@ public class AuthController {
         return ResponseEntity.ok(
                 authService.login(request));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Logged out successfully"));
+    }
+
 }

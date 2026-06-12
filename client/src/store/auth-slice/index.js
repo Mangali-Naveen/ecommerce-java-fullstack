@@ -3,7 +3,7 @@ import axios from "axios";
 
 const initialState = {
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   user: null,
 };
 
@@ -12,7 +12,7 @@ export const registerUser = createAsyncThunk(
 
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/register",
+      "http://localhost:8181/api/auth/register",
       formData,
       {
         withCredentials: true,
@@ -28,7 +28,7 @@ export const loginUser = createAsyncThunk(
 
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/login",
+      "http://localhost:8181/api/auth/login",
       formData,
       {
         withCredentials: true,
@@ -44,7 +44,7 @@ export const logoutUser = createAsyncThunk(
 
   async () => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/logout",
+      "http://localhost:8181/api/auth/logout",
       {},
       {
         withCredentials: true,
@@ -60,7 +60,7 @@ export const checkAuth = createAsyncThunk(
 
   async () => {
     const response = await axios.get(
-      "http://localhost:5000/api/auth/check-auth",
+      "http://localhost:8181/api/auth/check-auth",
       {
         withCredentials: true,
         headers: {
@@ -102,9 +102,18 @@ const authSlice = createSlice({
         console.log(action);
 
         state.isLoading = false;
-        state.user = action.payload.success ? action.payload.user : null;
-        state.isAuthenticated = action.payload.success;
-      })
+
+      if (action.payload.success) {
+
+        localStorage.setItem(
+        "token",
+        action.payload.token
+      );
+
+      state.isAuthenticated = true;
+      state.user = action.payload.user;
+    }
+  })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
@@ -127,6 +136,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+        localStorage.removeItem("token");
       });
   },
 });

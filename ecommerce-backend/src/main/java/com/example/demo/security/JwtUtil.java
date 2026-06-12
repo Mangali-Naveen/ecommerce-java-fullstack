@@ -24,15 +24,17 @@ public class JwtUtil {
                                        String role,
                                        String userName) {
 
-        return Jwts.builder()
-                .claim("id", id)
-                .claim("email", email)
-                .claim("role", role)
-                .claim("userName", userName)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 3600000))
-                .signWith(KEY)
-                .compact();
+    	return Jwts.builder()
+    	        .subject(email)
+    	        .claim("id", id)
+    	        .claim("email", email)
+    	        .claim("role", role)
+    	        .claim("userName", userName)
+    	        .issuedAt(new Date())
+    	        .expiration(new Date(
+    	                System.currentTimeMillis() + 3600000))
+    	        .signWith(KEY)
+    	        .compact();
     }
     
     public static Claims extractClaims(String token) {

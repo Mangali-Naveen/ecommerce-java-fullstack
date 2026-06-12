@@ -10,6 +10,7 @@ import com.example.demo.service.ProductService;
 
 @RestController
 @RequestMapping("/api/admin/products")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ProductController {
 
     @Autowired
@@ -39,5 +40,12 @@ public class ProductController {
     public String deleteProduct(@PathVariable Long id) {
 
         return productService.deleteProduct(id);
+    }
+    
+    @GetMapping("/{id}")
+    public Product getProductById(
+            @PathVariable Long id) {
+
+        return productService.getProductById(id);
     }
 }

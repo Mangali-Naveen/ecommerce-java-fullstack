@@ -10,6 +10,21 @@ import shopOrderSlice from "./shop/order-slice";
 import shopSearchSlice from "./shop/search-slice";
 import shopReviewSlice from "./shop/review-slice";
 import commonFeatureSlice from "./common-slice";
+import axios from "axios";
+
+// Automatically attach Authorization Bearer token to all axios requests if it exists
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const store = configureStore({
   reducer: {
@@ -30,3 +45,4 @@ const store = configureStore({
 });
 
 export default store;
+

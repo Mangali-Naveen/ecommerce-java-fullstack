@@ -10,7 +10,7 @@ function ShoppingProductTile({
 }) {
   return (
     <Card className="w-full max-w-sm mx-auto">
-      <div onClick={() => handleGetProductDetails(product?._id)}>
+      <div onClick={() => handleGetProductDetails(product?.id)}>
         <div className="relative">
           <img
             src={product?.image}
@@ -64,7 +64,7 @@ function ShoppingProductTile({
           </Button>
         ) : (
           <Button
-            onClick={() => handleAddtoCart(product?._id, product?.totalStock)}
+            onClick={() => handleAddtoCart(product?.id, product?.totalStock)}
             className="w-full"
           >
             Add to cart

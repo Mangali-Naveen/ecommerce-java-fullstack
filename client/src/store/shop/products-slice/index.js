@@ -18,10 +18,11 @@ export const fetchAllFilteredProducts = createAsyncThunk(
     });
 
     const result = await axios.get(
-      `http://localhost:5000/api/shop/products/get?${query}`
+      `http://localhost:8181/api/admin/products`
     );
 
     console.log(result);
+    console.log(result.data, "API RESPONSE");
 
     return result?.data;
   }
@@ -31,7 +32,7 @@ export const fetchProductDetails = createAsyncThunk(
   "/products/fetchProductDetails",
   async (id) => {
     const result = await axios.get(
-      `http://localhost:5000/api/shop/products/get/${id}`
+      `http://localhost:8181/api/admin/products/${id}`
     );
 
     return result?.data;
@@ -53,7 +54,7 @@ const shoppingProductSlice = createSlice({
       })
       .addCase(fetchAllFilteredProducts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.productList = action.payload.data;
+        state.productList = action.payload;
       })
       .addCase(fetchAllFilteredProducts.rejected, (state, action) => {
         state.isLoading = false;
@@ -64,7 +65,7 @@ const shoppingProductSlice = createSlice({
       })
       .addCase(fetchProductDetails.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.productDetails = action.payload.data;
+        state.productDetails = action.payload;
       })
       .addCase(fetchProductDetails.rejected, (state, action) => {
         state.isLoading = false;

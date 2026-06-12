@@ -41,9 +41,11 @@ function ShoppingListing() {
   const dispatch = useDispatch();
   const { productList, productDetails } = useSelector(
     (state) => state.shopProducts
+
   );
   const { cartItems } = useSelector((state) => state.shopCart);
   const { user } = useSelector((state) => state.auth);
+  console.log("CART STATE =", cartItems);
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,13 +81,20 @@ function ShoppingListing() {
   }
 
   function handleGetProductDetails(getCurrentProductId) {
-    console.log(getCurrentProductId);
+    console.log("CLICKED PRODUCT ID =", getCurrentProductId);
+
     dispatch(fetchProductDetails(getCurrentProductId));
   }
 
   function handleAddtoCart(getCurrentProductId, getTotalStock) {
     console.log(cartItems);
-    let getCartItems = cartItems.items || [];
+    console.log("========== ADD TO CART ==========");
+    console.log("USER =", user);
+    console.log("USER ID =", user?.id);
+    console.log("PRODUCT ID =", getCurrentProductId);
+    console.log("TOTAL STOCK =", getTotalStock);
+
+    let getCartItems = cartItems?.items || [];
 
     if (getCartItems.length) {
       const indexOfCurrentItem = getCartItems.findIndex(
@@ -110,14 +119,19 @@ function ShoppingListing() {
         productId: getCurrentProductId,
         quantity: 1,
       })
-    ).then((data) => {
-      if (data?.payload?.success) {
+    )
+      .then((data) => {
+        console.log("ADD TO CART RESPONSE =", data);
+
         dispatch(fetchCartItems(user?.id));
+
         toast({
           title: "Product is added to cart",
         });
-      }
-    });
+      })
+      .catch((err) => {
+        console.log("ADD TO CART ERROR =", err);
+      });
   }
 
   useEffect(() => {
@@ -184,12 +198,13 @@ function ShoppingListing() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
           {productList && productList.length > 0
             ? productList.map((productItem) => (
-                <ShoppingProductTile
-                  handleGetProductDetails={handleGetProductDetails}
-                  product={productItem}
-                  handleAddtoCart={handleAddtoCart}
-                />
-              ))
+              <ShoppingProductTile
+                key={productItem.id}
+                handleGetProductDetails={handleGetProductDetails}
+                product={productItem}
+                handleAddtoCart={handleAddtoCart}
+              />
+            ))
             : null}
         </div>
       </div>
@@ -200,6 +215,7 @@ function ShoppingListing() {
       />
     </div>
   );
+
 }
 
 export default ShoppingListing;

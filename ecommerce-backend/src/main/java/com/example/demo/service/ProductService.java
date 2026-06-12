@@ -71,4 +71,8 @@ public class ProductService {
 
         return "Product deleted successfully";
     }
+    
+    public Product getProductById(Long id) {
+    		return productRepository.findById(id).orElse(null);
+    }
 }
