@@ -46,7 +46,6 @@ public class CartService {
                     return cartRepository.save(newCart);
                 });
 
-        // Check if item already exists in the cart to avoid duplicates
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(i -> i.getProduct().getId().equals(product.getId()))
                 .findFirst();
@@ -91,22 +90,24 @@ public class CartService {
     }
     
     public String updateCartItem(UpdateCartRequest request) {
-        CartItem item = null;
-
-        if (request.getCartItemId() != null) {
-            item = cartItemRepository.findById(request.getCartItemId()).orElse(null);
-        } else if (request.getUserId() != null && request.getProductId() != null) {
-            User user = userRepository.findById(request.getUserId()).orElse(null);
-            if (user != null) {
-                Cart cart = cartRepository.findByUser(user).orElse(null);
-                if (cart != null) {
-                    item = cart.getItems().stream()
-                            .filter(i -> i.getProduct().getId().equals(request.getProductId()))
-                            .findFirst()
-                            .orElse(null);
-                }
-            }
+        if (request.getUserId() == null || request.getProductId() == null) {
+            return "Invalid request: userId and productId required";
         }
+
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+        if (user == null) {
+            return "User not found";
+        }
+
+        Cart cart = cartRepository.findByUser(user).orElse(null);
+        if (cart == null) {
+            return "Cart not found";
+        }
+
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProduct().getId().equals(request.getProductId()))
+                .findFirst()
+                .orElse(null);
 
         if (item == null) {
             return "Cart item not found";

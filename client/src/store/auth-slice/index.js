@@ -59,14 +59,22 @@ export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
 
   async () => {
+    const token = localStorage.getItem("token");
+
+    const headers = {
+      "Cache-Control":
+        "no-store, no-cache, must-revalidate, proxy-revalidate",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await axios.get(
       "http://localhost:8181/api/auth/check-auth",
       {
         withCredentials: true,
-        headers: {
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
+        headers,
       }
     );
 
@@ -105,13 +113,16 @@ const authSlice = createSlice({
 
       if (action.payload.success) {
 
-        localStorage.setItem(
-        "token",
-        action.payload.token
-      );
+        localStorage.setItem("token", action.payload.token);
 
-      state.isAuthenticated = true;
-      state.user = action.payload.user;
+        // set default Authorization header for subsequent requests
+        axios.defaults.headers.common["Authorization"] =
+          `Bearer ${action.payload.token}`;
+
+        state.isAuthenticated = true;
+
+        // payload includes user (UserDto) from backend
+        state.user = action.payload.user || null;
     }
   })
       .addCase(loginUser.rejected, (state, action) => {
@@ -125,6 +136,12 @@ const authSlice = createSlice({
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.success ? action.payload.user : null;
+        if (action.payload.success) {
+          const token = localStorage.getItem("token");
+          if (token) {
+            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          }
+        }
         state.isAuthenticated = action.payload.success;
       })
       .addCase(checkAuth.rejected, (state, action) => {

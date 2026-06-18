@@ -5,6 +5,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.UserDto;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.User;
@@ -68,9 +69,12 @@ public class AuthService {
                 user.getRole(),
                 user.getUserName());
 
+        UserDto userDto = new UserDto(user);
+
         return new AuthResponse(
-                true,
-                "Logged in successfully",
-                token);
+            true,
+            "Logged in successfully",
+            token,
+            userDto);
     }
 }

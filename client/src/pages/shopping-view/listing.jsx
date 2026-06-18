@@ -124,6 +124,8 @@ function ShoppingListing() {
         console.log("ADD TO CART RESPONSE =", data);
 
         dispatch(fetchCartItems(user?.id));
+        console.log("CURRENT USER =", user);
+        console.log("CURRENT USER ID =", user?.id);
 
         toast({
           title: "Product is added to cart",

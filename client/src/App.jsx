@@ -22,6 +22,7 @@ import PaypalReturnPage from "./pages/shopping-view/paypal-return";
 import PaymentSuccessPage from "./pages/shopping-view/payment-success";
 import SearchProducts from "./pages/shopping-view/search";
 import AuthLogin from "./pages/auth/login";
+import { Navigate } from "react-router-dom";
 function App() {
   const { user, isAuthenticated, isLoading } = useSelector(
     (state) => state.auth
@@ -38,6 +39,7 @@ function App() {
   console.log(isLoading, user);
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/shop/home" />} />
       <Route path="/auth/login" element={<AuthLogin />} />
       <Route path="/auth/register" element={<AuthRegister />} />
 

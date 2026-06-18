@@ -89,6 +89,8 @@ function ShoppingHome() {
     ).then((data) => {
       if (data?.payload?.success) {
         dispatch(fetchCartItems(user?.id));
+        console.log("CURRENT USER =", user);
+        console.log("CURRENT USER ID =", user?.id);
         toast({
           title: "Product is added to cart",
         });
