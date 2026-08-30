@@ -12,10 +12,10 @@ import java.util.Map;
 
 @RestController
 public class AuthCheckController {
-
 	@GetMapping("/api/auth/check-auth")
 	public ResponseEntity<?> checkAuth(
 	        @RequestHeader(value = "Authorization", required = false) String authHeader) {
+		System.out.println("ACTIVE BACKEND RUNNING");
 
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 			return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
@@ -35,5 +35,6 @@ public class AuthCheckController {
 			return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
 		}
 	}
+	
 }
 

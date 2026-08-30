@@ -63,7 +63,9 @@ export const addProductFormElements = [
       { id: "kids", label: "Kids" },
       { id: "accessories", label: "Accessories" },
       { id: "footwear", label: "Footwear" },
+      { id: "other", label: "Other / Add New Category" },
     ],
+    allowCustom: true,
   },
   {
     label: "Brand",
@@ -76,7 +78,9 @@ export const addProductFormElements = [
       { id: "levi", label: "Levi's" },
       { id: "zara", label: "Zara" },
       { id: "h&m", label: "H&M" },
+      { id: "other", label: "Other / Add New Brand" },
     ],
+    allowCustom: true,
   },
   {
     label: "Price",
@@ -84,6 +88,8 @@ export const addProductFormElements = [
     componentType: "input",
     type: "number",
     placeholder: "Enter product price",
+    step: "0.01",
+    min: "0",
   },
   {
     label: "Sale Price",
@@ -91,6 +97,8 @@ export const addProductFormElements = [
     componentType: "input",
     type: "number",
     placeholder: "Enter sale price (optional)",
+    step: "0.01",
+    min: "0",
   },
   {
     label: "Total Stock",
@@ -99,7 +107,40 @@ export const addProductFormElements = [
     type: "number",
     placeholder: "Enter total stock",
   },
+  {
+    label: "Image URL",
+    name: "imageUrl",
+    componentType: "input",
+    type: "text",
+    placeholder: "Paste image URL (optional)",
+  },
+  {
+    label: "Sizes",
+    name: "sizes",
+    componentType: "multiselect",
+    options: [
+      { id: "6", label: "6" },
+      { id: "7", label: "7" },
+      { id: "8", label: "8" },
+      { id: "9", label: "9" },
+      { id: "10", label: "10" },
+      { id: "11", label: "11" },
+      { id: "XS", label: "XS" },
+      { id: "S", label: "S" },
+      { id: "M", label: "M" },
+      { id: "L", label: "L" },
+      { id: "XL", label: "XL" },
+      { id: "XXL", label: "XXL" },
+    ],
+  },
 ];
+
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8181";
+
+export const buildApiUrl = (path = "") => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
 
 export const shoppingViewHeaderMenuItems = [
   {
@@ -141,6 +182,11 @@ export const shoppingViewHeaderMenuItems = [
     id: "search",
     label: "Search",
     path: "/shop/search",
+  },
+  {
+    id: "wishlist",
+    label: "Wishlist",
+    path: "/shop/wishlist",
   },
 ];
 

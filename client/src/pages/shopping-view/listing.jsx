@@ -1,6 +1,7 @@
 import ProductFilter from "@/components/shopping-view/filter";
 import ProductDetailsDialog from "@/components/shopping-view/product-details";
 import ShoppingProductTile from "@/components/shopping-view/product-tile";
+import GuestAccessDialog from "@/components/common/auth-guard-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,8 +17,9 @@ import {
   fetchAllFilteredProducts,
   fetchProductDetails,
 } from "@/store/shop/products-slice";
+import { fetchWishlist } from "@/store/shop/wishlist-slice";
 import { ArrowUpDownIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 
@@ -32,8 +34,6 @@ function createSearchParamsHelper(filterParams) {
     }
   }
 
-  console.log(queryParams, "queryParams");
-
   return queryParams.join("&");
 }
 
@@ -45,14 +45,56 @@ function ShoppingListing() {
   );
   const { cartItems } = useSelector((state) => state.shopCart);
   const { user } = useSelector((state) => state.auth);
-  console.log("CART STATE =", cartItems);
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState(null);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const { toast } = useToast();
 
   const categorySearchParam = searchParams.get("category");
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = productList || [];
+
+    // Filter by category
+    if (filters?.category && filters.category.length > 0) {
+      result = result.filter((productItem) =>
+        filters.category.includes(productItem.category)
+      );
+    }
+
+    // Filter by brand
+    if (filters?.brand && filters.brand.length > 0) {
+      result = result.filter((productItem) =>
+        filters.brand.includes(productItem.brand)
+      );
+    }
+
+    // Sort the result
+    if (sort) {
+      result = [...result].sort((a, b) => {
+        const priceA = a.salePrice > 0 ? a.salePrice : a.price;
+        const priceB = b.salePrice > 0 ? b.salePrice : b.price;
+
+        if (sort === "price-lowtohigh") {
+          return priceA - priceB;
+        }
+        if (sort === "price-hightolow") {
+          return priceB - priceA;
+        }
+        if (sort === "title-atoz") {
+          return a.title.localeCompare(b.title);
+        }
+        if (sort === "title-ztoa") {
+          return b.title.localeCompare(a.title);
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [productList, filters, sort]);
 
   function handleSort(value) {
     setSort(value);
@@ -81,18 +123,15 @@ function ShoppingListing() {
   }
 
   function handleGetProductDetails(getCurrentProductId) {
-    console.log("CLICKED PRODUCT ID =", getCurrentProductId);
-
     dispatch(fetchProductDetails(getCurrentProductId));
   }
 
   function handleAddtoCart(getCurrentProductId, getTotalStock) {
-    console.log(cartItems);
-    console.log("========== ADD TO CART ==========");
-    console.log("USER =", user);
-    console.log("USER ID =", user?.id);
-    console.log("PRODUCT ID =", getCurrentProductId);
-    console.log("TOTAL STOCK =", getTotalStock);
+    if (!user?.id) {
+      toast({ title: "Please login to continue shopping." });
+      setShowGuestDialog(true);
+      return;
+    }
 
     let getCartItems = cartItems?.items || [];
 
@@ -121,18 +160,13 @@ function ShoppingListing() {
       })
     )
       .then((data) => {
-        console.log("ADD TO CART RESPONSE =", data);
-
         dispatch(fetchCartItems(user?.id));
-        console.log("CURRENT USER =", user);
-        console.log("CURRENT USER ID =", user?.id);
 
         toast({
           title: "Product is added to cart",
         });
       })
-      .catch((err) => {
-        console.log("ADD TO CART ERROR =", err);
+      .catch(() => {
       });
   }
 
@@ -149,17 +183,22 @@ function ShoppingListing() {
   }, [filters]);
 
   useEffect(() => {
-    if (filters !== null && sort !== null)
+    if (filters !== null && sort !== null) {
       dispatch(
         fetchAllFilteredProducts({ filterParams: filters, sortParams: sort })
       );
+    }
   }, [dispatch, sort, filters]);
 
   useEffect(() => {
     if (productDetails !== null) setOpenDetailsDialog(true);
   }, [productDetails]);
 
-  console.log(productList, "productListproductListproductList");
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchWishlist());
+    }
+  }, [dispatch, user]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 p-4 md:p-6">
@@ -169,7 +208,7 @@ function ShoppingListing() {
           <h2 className="text-lg font-extrabold">All Products</h2>
           <div className="flex items-center gap-3">
             <span className="text-muted-foreground">
-              {productList?.length} Products
+              {filteredAndSortedProducts?.length} Products
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -198,8 +237,8 @@ function ShoppingListing() {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-          {productList && productList.length > 0
-            ? productList.map((productItem) => (
+          {filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? (
+            filteredAndSortedProducts.map((productItem) => (
               <ShoppingProductTile
                 key={productItem.id}
                 handleGetProductDetails={handleGetProductDetails}
@@ -207,7 +246,11 @@ function ShoppingListing() {
                 handleAddtoCart={handleAddtoCart}
               />
             ))
-            : null}
+          ) : (
+            <div className="col-span-full text-center py-12 text-muted-foreground font-medium text-lg">
+              No products found
+            </div>
+          )}
         </div>
       </div>
       <ProductDetailsDialog
@@ -215,6 +258,7 @@ function ShoppingListing() {
         setOpen={setOpenDetailsDialog}
         productDetails={productDetails}
       />
+      <GuestAccessDialog open={showGuestDialog} onOpenChange={setShowGuestDialog} />
     </div>
   );
 

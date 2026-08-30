@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.dto.OrderRequest;
@@ -23,10 +24,11 @@ public class OrderController {
     }
 
     @GetMapping("/list/{userId}")
-    public List<Order> getOrdersByUser(
+    public ResponseEntity<?> getOrdersByUser(
             @PathVariable Long userId) {
 
-        return orderService.getOrdersByUser(userId);
+        List<Order> orders = orderService.getOrdersByUser(userId);
+        return ResponseEntity.ok(Map.of("success", true, "data", orders));
     }
 
     @GetMapping("/details/{id}")

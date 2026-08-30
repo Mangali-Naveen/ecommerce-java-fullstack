@@ -12,10 +12,12 @@ import ShoppingHome from "./pages/shopping-view/home";
 import ShoppingListing from "./pages/shopping-view/listing";
 import ShoppingCheckout from "./pages/shopping-view/checkout";
 import ShoppingAccount from "./pages/shopping-view/account";
+import WishlistPage from "./pages/shopping-view/wishlist";
 import CheckAuth from "./components/common/check-auth";
 import UnauthPage from "./pages/unauth-page";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { checkAuth } from "./store/auth-slice";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaypalReturnPage from "./pages/shopping-view/paypal-return";
@@ -27,27 +29,39 @@ function App() {
   const { user, isAuthenticated, isLoading } = useSelector(
     (state) => state.auth
   );
+  const location = useLocation();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(checkAuth());
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      dispatch(checkAuth());
+    }
   }, [dispatch]);
 
 
   if (isLoading) return <Skeleton className="w-[800] bg-black h-[600px]" />;
 
-  console.log(isLoading, user);
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/shop/home" />} />
       <Route path="/auth/login" element={<AuthLogin />} />
       <Route path="/auth/register" element={<AuthRegister />} />
 
+      <Route path="/admin" element={<CheckAuth><AdminLayout /></CheckAuth>}>
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="features" element={<AdminFeatures />} />
+      </Route>
+
       <Route path="/shop" element={<ShoppingLayout />}>
         <Route path="home" element={<ShoppingHome />} />
         <Route path="listing" element={<ShoppingListing />} />
         <Route path="checkout" element={<ShoppingCheckout />} />
         <Route path="account" element={<ShoppingAccount />} />
+        <Route path="wishlist" element={<WishlistPage />} />
         <Route path="paypal-return" element={<PaypalReturnPage />} />
         <Route
           path="payment-success"

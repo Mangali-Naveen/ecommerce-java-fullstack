@@ -11,8 +11,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 public class JwtUtil {
 
-    private static final String SECRET =
-            "CLIENT_SECRET_KEY_CLIENT_SECRET_KEY_CLIENT_SECRET_KEY";
+    private static final String SECRET = System.getenv("JWT_SECRET");
 
     private static final Key KEY =
             new SecretKeySpec(

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ShopNest favicon">
+  <defs>
+    <linearGradient id="bagGradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#6D28D9" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0F172A"/>
+  <path d="M22 26V20C22 13.373 27.373 8 34 8C40.627 8 46 13.373 46 20V26" fill="none" stroke="#F8FAFC" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18 26H46L43.2 51.2C42.9 54.1 40.5 56 37.6 56H26.4C23.5 56 21.1 54.1 20.8 51.2L18 26Z" fill="url(#bagGradient)"/>
+  <path d="M26 30L29 46H35L38 30" fill="none" stroke="#F8FAFC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M27 38H37" stroke="#E9D5FF" stroke-width="3" stroke-linecap="round"/>
+</svg>

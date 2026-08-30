@@ -1,52 +1,36 @@
-<<<<<<< HEAD
-HELP.md
-target/
+# Java / Spring Boot
+**/target/
+**/build/
+!**/src/**/target/
+!**/src/**/build/
+.mvn/
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# React / Vite
+client/node_modules/
+client/dist/
+client/.vite/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-=======
-# React
-client/node_modules
-client/dist
-
-# Spring Boot
-backend/target
-
-# IDE
-.vscode
-.idea
-
-# Environment
+# Environment files
 .env
+.env.*
+!.env.example
 
 # Logs
 *.log
->>>>>>> b25ed28b4c9dc11adfd745f832d6e193b0301a62
+logs/
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Spring Boot uploads / generated runtime content
+# Keep runtime images out of Git unless intentionally versioned.
+ecommerce-backend/uploads/

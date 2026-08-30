@@ -3,10 +3,11 @@ import img from "../../assets/account.jpg";
 import { useDispatch, useSelector } from "react-redux";
 import UserCartItemsContent from "@/components/shopping-view/cart-items-content";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createNewOrder } from "@/store/shop/order-slice";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { formatINR } from "@/lib/utils";
 
 function ShoppingCheckout() {
   const { cartItems } = useSelector((state) => state.shopCart);
@@ -15,9 +16,20 @@ function ShoppingCheckout() {
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
   const [isPaymentStart, setIsPaymemntStart] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  console.log(currentSelectedAddress, "cartItems");
+  useEffect(() => {
+    if (!user?.id) {
+      toast({ title: "Please login to continue shopping." });
+      navigate("/auth/login", {
+        state: {
+          from: "/shop/checkout",
+          message: "Please login to continue shopping.",
+        },
+      });
+    }
+  }, [navigate, user?.id, toast]);
 
   const totalCartAmount =
     cartItems && cartItems.items && cartItems.items.length > 0
@@ -52,7 +64,7 @@ function ShoppingCheckout() {
 
     const orderData = {
       userId: user?.id,
-      cartId: cartItems?._id,
+      cartId: cartItems?.id,
       cartItems: cartItems.items.map((singleCartItem) => ({
         productId: singleCartItem?.productId,
         title: singleCartItem?.title,
@@ -64,7 +76,7 @@ function ShoppingCheckout() {
         quantity: singleCartItem?.quantity,
       })),
       addressInfo: {
-        addressId: currentSelectedAddress?._id,
+        addressId: currentSelectedAddress?.id,
         address: currentSelectedAddress?.address,
         city: currentSelectedAddress?.city,
         pincode: currentSelectedAddress?.pincode,
@@ -82,7 +94,6 @@ function ShoppingCheckout() {
     };
 
     dispatch(createNewOrder(orderData)).then((data) => {
-      console.log(data, "sangam");
       if (data?.payload?.success) {
         setIsPaymemntStart(true);
       } else {
@@ -94,6 +105,8 @@ function ShoppingCheckout() {
   if (approvalURL) {
     window.location.href = approvalURL;
   }
+
+  if (!user?.id) return null;
 
   return (
     <div className="flex flex-col">
@@ -114,7 +127,7 @@ function ShoppingCheckout() {
           <div className="mt-8 space-y-4">
             <div className="flex justify-between">
               <span className="font-bold">Total</span>
-              <span className="font-bold">${totalCartAmount}</span>
+              <span className="font-bold">{formatINR(totalCartAmount)}</span>
             </div>
           </div>
           <div className="mt-4 w-full">

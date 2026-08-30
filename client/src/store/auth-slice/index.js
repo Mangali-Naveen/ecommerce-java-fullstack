@@ -1,9 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { clearCart } from "@/store/shop/cart-slice";
+import { API_BASE_URL } from "@/config";
 
 const initialState = {
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: Boolean(localStorage.getItem("token")),
   user: null,
 };
 
@@ -12,7 +14,7 @@ export const registerUser = createAsyncThunk(
 
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:8181/api/auth/register",
+      `${API_BASE_URL}/api/auth/register`,
       formData,
       {
         withCredentials: true,
@@ -28,7 +30,7 @@ export const loginUser = createAsyncThunk(
 
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:8181/api/auth/login",
+      `${API_BASE_URL}/api/auth/login`,
       formData,
       {
         withCredentials: true,
@@ -42,14 +44,16 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   "/auth/logout",
 
-  async () => {
+  async (_, thunkAPI) => {
     const response = await axios.post(
-      "http://localhost:8181/api/auth/logout",
+      `${API_BASE_URL}/api/auth/logout`,
       {},
       {
         withCredentials: true,
       }
     );
+
+    thunkAPI.dispatch(clearCart());
 
     return response.data;
   }
@@ -71,7 +75,7 @@ export const checkAuth = createAsyncThunk(
     }
 
     const response = await axios.get(
-      "http://localhost:8181/api/auth/check-auth",
+      `${API_BASE_URL}/api/auth/check-auth`,
       {
         withCredentials: true,
         headers,
@@ -107,8 +111,6 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.log(action);
-
         state.isLoading = false;
 
       if (action.payload.success) {
@@ -149,11 +151,26 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       })
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoading = true;
+        state.user = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
+      })
       .addCase(logoutUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
         localStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
       });
   },
 });

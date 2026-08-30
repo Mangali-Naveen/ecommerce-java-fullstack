@@ -1,5 +1,6 @@
 import ProductDetailsDialog from "@/components/shopping-view/product-details";
 import ShoppingProductTile from "@/components/shopping-view/product-tile";
+import GuestAccessDialog from "@/components/common/auth-guard-dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { addToCart, fetchCartItems } from "@/store/shop/cart-slice";
@@ -8,13 +9,15 @@ import {
   getSearchResults,
   resetSearchResults,
 } from "@/store/shop/search-slice";
-import { useEffect, useState } from "react";
+import { fetchWishlist } from "@/store/shop/wishlist-slice";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 
 function SearchProducts() {
   const [keyword, setKeyword] = useState("");
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { searchResults } = useSelector((state) => state.shopSearch);
@@ -24,20 +27,34 @@ function SearchProducts() {
 
   const { cartItems } = useSelector((state) => state.shopCart);
   const { toast } = useToast();
+  const searchRequest = useRef(null);
   useEffect(() => {
-    if (keyword && keyword.trim() !== "" && keyword.trim().length > 3) {
-      setTimeout(() => {
-        setSearchParams(new URLSearchParams(`?keyword=${keyword}`));
-        dispatch(getSearchResults(keyword));
-      }, 1000);
-    } else {
-      setSearchParams(new URLSearchParams(`?keyword=${keyword}`));
+    const trimmedKeyword = keyword.trim();
+
+    if (trimmedKeyword === "") {
+      searchRequest.current?.abort();
+      searchRequest.current = null;
+      setSearchParams({});
       dispatch(resetSearchResults());
+      return;
     }
-  }, [keyword]);
+
+    const timeoutId = setTimeout(() => {
+      setSearchParams({ keyword: trimmedKeyword });
+      searchRequest.current?.abort();
+      searchRequest.current = dispatch(getSearchResults(trimmedKeyword));
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [keyword, dispatch, setSearchParams]);
 
   function handleAddtoCart(getCurrentProductId, getTotalStock) {
-    console.log(cartItems);
+    if (!user?.id) {
+      toast({ title: "Please login to continue shopping." });
+      setShowGuestDialog(true);
+      return;
+    }
+
     let getCartItems = cartItems.items || [];
 
     if (getCartItems.length) {
@@ -74,7 +91,6 @@ function SearchProducts() {
   }
 
   function handleGetProductDetails(getCurrentProductId) {
-    console.log(getCurrentProductId);
     dispatch(fetchProductDetails(getCurrentProductId));
   }
 
@@ -82,7 +98,11 @@ function SearchProducts() {
     if (productDetails !== null) setOpenDetailsDialog(true);
   }, [productDetails]);
 
-  console.log(searchResults, "searchResults");
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchWishlist());
+    }
+  }, [dispatch, user]);
 
   return (
     <div className="container mx-auto md:px-6 px-4 py-8">
@@ -114,6 +134,7 @@ function SearchProducts() {
         setOpen={setOpenDetailsDialog}
         productDetails={productDetails}
       />
+      <GuestAccessDialog open={showGuestDialog} onOpenChange={setShowGuestDialog} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { buildApiUrl } from "@/config";
 
 const initialState = {
   isLoading: false,
@@ -10,19 +11,14 @@ const initialState = {
 export const fetchAllFilteredProducts = createAsyncThunk(
   "/products/fetchAllProducts",
   async ({ filterParams, sortParams }) => {
-    console.log(fetchAllFilteredProducts, "fetchAllFilteredProducts");
-
     const query = new URLSearchParams({
       ...filterParams,
       sortBy: sortParams,
     });
 
-    const result = await axios.get(
-      `http://localhost:8181/api/admin/products`
-    );
+    const requestURL = buildApiUrl("/api/shop/products/get");
 
-    console.log(result);
-    console.log(result.data, "API RESPONSE");
+    const result = await axios.get(requestURL);
 
     return result?.data;
   }
@@ -31,9 +27,9 @@ export const fetchAllFilteredProducts = createAsyncThunk(
 export const fetchProductDetails = createAsyncThunk(
   "/products/fetchProductDetails",
   async (id) => {
-    const result = await axios.get(
-      `http://localhost:8181/api/admin/products/${id}`
-    );
+    const requestURL = buildApiUrl(`/api/shop/products/${id}`);
+
+    const result = await axios.get(requestURL);
 
     return result?.data;
   }
@@ -54,7 +50,7 @@ const shoppingProductSlice = createSlice({
       })
       .addCase(fetchAllFilteredProducts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.productList = action.payload;
+        state.productList = action.payload?.data || [];
       })
       .addCase(fetchAllFilteredProducts.rejected, (state, action) => {
         state.isLoading = false;
@@ -65,7 +61,7 @@ const shoppingProductSlice = createSlice({
       })
       .addCase(fetchProductDetails.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.productDetails = action.payload;
+        state.productDetails = action.payload?.data || null;
       })
       .addCase(fetchProductDetails.rejected, (state, action) => {
         state.isLoading = false;

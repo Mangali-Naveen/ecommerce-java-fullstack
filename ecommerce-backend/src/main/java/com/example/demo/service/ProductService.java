@@ -7,13 +7,29 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.entity.Product;
+import com.example.demo.repository.CartItemRepository;
+import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.ReviewRepository;
+import com.example.demo.repository.WishlistRepository;
 
 @Service
 public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private WishlistRepository wishlistRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     public Product addProduct(ProductRequest request) {
 
@@ -26,6 +42,7 @@ public class ProductService {
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setSalePrice(request.getSalePrice());
+        product.setSizes(request.getSizes());
         product.setTotalStock(request.getTotalStock());
         product.setAverageReview(0.0);
 
@@ -34,7 +51,15 @@ public class ProductService {
     
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        System.out.println("[ProductService] getAllProducts() called");
+        List<Product> products = productRepository.findAll();
+        System.out.println("[ProductService] Found " + products.size() + " products in database");
+        products.forEach(p -> System.out.println("[ProductService] - Product ID: " + p.getId() + ", Title: " + p.getTitle()));
+        return products;
+    }
+
+    public List<Product> searchProducts(String keyword) {
+        return productRepository.searchByKeyword(keyword.trim());
     }
     
 
@@ -56,6 +81,7 @@ public class ProductService {
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setSalePrice(request.getSalePrice());
+        product.setSizes(request.getSizes());
         product.setTotalStock(request.getTotalStock());
 
         return productRepository.save(product);
@@ -65,6 +91,13 @@ public class ProductService {
 
         if (!productRepository.existsById(id)) {
             return "Product not found";
+        }
+
+        if (cartItemRepository.existsByProduct_Id(id)
+                || orderRepository.existsByProductIdInItems(id)
+                || wishlistRepository.existsByProduct_Id(id)
+                || reviewRepository.existsByProductId(id)) {
+            return "Product cannot be deleted because it is referenced by existing orders, cart items, wishlist items, or reviews.";
         }
 
         productRepository.deleteById(id);

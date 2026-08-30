@@ -1,7 +1,7 @@
-import { StarIcon } from "lucide-react";
+import { StarIcon, Heart } from "lucide-react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent } from "../ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,24 +12,52 @@ import { Label } from "../ui/label";
 import StarRatingComponent from "../common/star-rating";
 import { useEffect, useState } from "react";
 import { addReview, getReviews } from "@/store/shop/review-slice";
+import GuestAccessDialog from "@/components/common/auth-guard-dialog";
+import { addToWishlist, removeFromWishlist } from "@/store/shop/wishlist-slice";
+import { formatINR } from "@/lib/utils";
 
 function ProductDetailsDialog({ open, setOpen, productDetails }) {
   const [reviewMsg, setReviewMsg] = useState("");
   const [rating, setRating] = useState(0);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.shopCart);
   const { reviews } = useSelector((state) => state.shopReview);
+  const { wishlistItems } = useSelector((state) => state.shopWishlist);
 
   const { toast } = useToast();
 
-  function handleRatingChange(getRating) {
-    console.log(getRating, "getRating");
+  const isInWishlist =
+    wishlistItems?.some(
+      (item) => item.product?.id === productDetails?.id
+    ) || false;
 
+  function handleWishlistToggle(e) {
+    e.stopPropagation();
+    if (!user?.id) {
+      setShowGuestDialog(true);
+      return;
+    }
+
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(productDetails?.id));
+    } else {
+      dispatch(addToWishlist(productDetails?.id));
+    }
+  }
+
+  function handleRatingChange(getRating) {
     setRating(getRating);
   }
 
   function handleAddToCart(getCurrentProductId, getTotalStock) {
+    if (!user?.id) {
+      toast({ title: "Please login to continue shopping." });
+      setShowGuestDialog(true);
+      return;
+    }
+
     let getCartItems = cartItems.items || [];
 
     if (getCartItems.length) {
@@ -72,6 +100,12 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
   }
 
   function handleAddReview() {
+    if (!user?.id) {
+      toast({ title: "Please login to continue shopping." });
+      setShowGuestDialog(true);
+      return;
+    }
+
     dispatch(
       addReview({
         productId: productDetails?.id,
@@ -97,8 +131,6 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
     if (productDetails !== null) dispatch(getReviews(productDetails?.id));
   }, [productDetails]);
 
-  console.log(reviews, "reviews");
-
   const averageReview =
     reviews && reviews.length > 0
       ? reviews.reduce((sum, reviewItem) => sum + reviewItem.reviewValue, 0) /
@@ -106,54 +138,125 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
       : 0;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="grid grid-cols-2 gap-8 sm:p-12 max-w-[90vw] sm:max-w-[80vw] lg:max-w-[70vw]">
-        <div className="relative overflow-hidden rounded-lg">
+      <DialogContent className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 p-5 sm:p-8 md:p-10 max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[70vw]">
+        <DialogTitle className="sr-only">
+          {productDetails?.title || "Product details"}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {productDetails?.description || "Product details dialog"}
+        </DialogDescription>
+        
+        {/* Left Column: Image wrapper */}
+        <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center h-fit">
           <img
             src={productDetails?.image}
             alt={productDetails?.title}
             width={600}
             height={600}
-            className="aspect-square w-full object-cover"
+            className="aspect-square w-full object-cover shadow-sm transition-transform duration-300 hover:scale-[1.02]"
           />
         </div>
-        <div className="">
-          <div>
-            <h1 className="text-3xl font-extrabold">{productDetails?.title}</h1>
-            <p className="text-muted-foreground text-2xl mb-5 mt-4">
-              {productDetails?.description}
-            </p>
-          </div>
-          <div className="flex items-center justify-between">
-            <p
-              className={`text-3xl font-bold text-primary ${
-                productDetails?.salePrice > 0 ? "line-through" : ""
-              }`}
+
+        {/* Right Column: Information & Reviews */}
+        <div className="flex flex-col">
+          {/* Header & Wishlist */}
+          <div className="flex justify-between items-start gap-4 mb-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              {productDetails?.title}
+            </h1>
+            <button
+              onClick={handleWishlistToggle}
+              className="bg-white rounded-full p-2.5 hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-all duration-200 shadow-sm border border-gray-200/80 flex-shrink-0"
+              aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             >
-              ${productDetails?.price}
-            </p>
-            {productDetails?.salePrice > 0 ? (
-              <p className="text-2xl font-bold text-muted-foreground">
-                ${productDetails?.salePrice}
-              </p>
-            ) : null}
+              <Heart
+                size={18}
+                className={`transition-all duration-200 ${
+                  isInWishlist
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              />
+            </button>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-0.5">
-              <StarRatingComponent rating={averageReview} />
-            </div>
-            <span className="text-muted-foreground">
-              ({averageReview.toFixed(2)})
-            </span>
-          </div>
-          <div className="mt-5 mb-5">
+
+          {/* Stock Badge */}
+          <div className="mb-4">
             {productDetails?.totalStock === 0 ? (
-              <Button className="w-full opacity-60 cursor-not-allowed">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                Out of Stock
+              </span>
+            ) : productDetails?.totalStock <= 5 ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                Only {productDetails?.totalStock} left
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                In Stock
+              </span>
+            )}
+          </div>
+
+          {/* Pricing & Rating Info */}
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+            <div className="flex items-baseline gap-3">
+              {productDetails?.salePrice > 0 ? (
+                <>
+                  <span className="text-2xl sm:text-3xl font-extrabold text-green-600">
+                    {formatINR(productDetails?.salePrice)}
+                  </span>
+                  <span className="text-sm sm:text-base text-gray-400 font-normal line-through">
+                    {formatINR(productDetails?.price)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                  {formatINR(productDetails?.price)}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-gray-50 border border-gray-100">
+              <StarRatingComponent rating={averageReview} />
+              <span className="text-xs sm:text-sm font-semibold text-gray-600">
+                {averageReview.toFixed(1)}
+              </span>
+            </div>
+          </div>
+
+          {/* Product Description */}
+          <p className="text-xs sm:text-sm leading-relaxed text-gray-600 mb-6">
+            {productDetails?.description}
+          </p>
+
+          {/* Sizes */}
+          {productDetails?.sizes && productDetails?.sizes.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-900 mb-2">Available Sizes</h3>
+              <div className="flex flex-wrap gap-2">
+                {productDetails?.sizes.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center justify-center border border-gray-200 rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-800 bg-white hover:border-gray-900 transition-colors duration-150 cursor-pointer"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add To Cart */}
+          <div className="mb-6">
+            {productDetails?.totalStock === 0 ? (
+              <Button className="w-full opacity-60 cursor-not-allowed" disabled>
                 Out of Stock
               </Button>
             ) : (
               <Button
-                className="w-full"
+                className="w-full transition-all hover:shadow-md py-6 text-sm sm:text-base"
                 onClick={() =>
                   handleAddToCart(
                     productDetails?.id,
@@ -165,60 +268,97 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
               </Button>
             )}
           </div>
-          <Separator />
-          <div className="max-h-[300px] overflow-auto">
-            <h2 className="text-xl font-bold mb-4">Reviews</h2>
-            <div className="grid gap-6">
+
+          {/* Separator & Reviews Feed */}
+          <Separator className="bg-gray-100" />
+          
+          <div className="pt-6 mt-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">
+              Customer Reviews ({reviews?.length || 0})
+            </h2>
+            
+            <div className="max-h-[250px] overflow-y-auto space-y-3 pr-2 mb-6 scrollbar-thin">
               {reviews && reviews.length > 0 ? (
-                reviews.map((reviewItem) => (
-                  <div className="flex gap-4">
-                    <Avatar className="w-10 h-10 border">
-                      <AvatarFallback>
-                        {reviewItem?.userName[0].toUpperCase()}
+                reviews.map((reviewItem, index) => (
+                  <div
+                    key={reviewItem?.id ?? reviewItem?.reviewId ?? reviewItem?.userId ?? index}
+                    className="p-4 rounded-lg bg-gray-50/50 border border-gray-100 flex gap-4 transition-all duration-200 hover:bg-gray-50"
+                  >
+                    <Avatar className="w-9 h-9 border border-gray-200/80 flex-shrink-0">
+                      <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold text-sm">
+                        {reviewItem?.userName?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="grid gap-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold">{reviewItem?.userName}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h3 className="font-semibold text-sm text-gray-900 truncate">
+                          {reviewItem?.userName}
+                        </h3>
                       </div>
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-0.5 mb-2">
                         <StarRatingComponent rating={reviewItem?.reviewValue} />
                       </div>
-                      <p className="text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed break-words">
                         {reviewItem.reviewMessage}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <h1>No Reviews</h1>
+                <div className="text-center py-8 px-4 border border-dashed border-gray-200 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-900 mb-0.5">
+                    No reviews yet
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Be the first to share your thoughts!
+                  </p>
+                </div>
               )}
             </div>
-            <div className="mt-10 flex-col flex gap-2">
-              <Label>Write a review</Label>
-              <div className="flex gap-1">
-                <StarRatingComponent
-                  rating={rating}
-                  handleRatingChange={handleRatingChange}
-                />
+            
+            {/* Submit Review Box */}
+            <div className="border-t border-gray-100 pt-6 space-y-4">
+              <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                Write a review
+              </h3>
+              <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-white">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold text-gray-600">Overall Rating</Label>
+                  <div className="flex gap-1 py-0.5">
+                    <StarRatingComponent
+                      rating={rating}
+                      handleRatingChange={handleRatingChange}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="reviewMsg" className="text-xs font-semibold text-gray-600">Your Review</Label>
+                  <Input
+                    id="reviewMsg"
+                    name="reviewMsg"
+                    value={reviewMsg}
+                    onChange={(event) => setReviewMsg(event.target.value)}
+                    placeholder="What did you like or dislike? Write your review here..."
+                    className="bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm h-10"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleAddReview}
+                  disabled={reviewMsg.trim() === ""}
+                  className="w-full mt-2 transition-all hover:shadow-sm"
+                >
+                  Submit Review
+                </Button>
               </div>
-              <Input
-                name="reviewMsg"
-                value={reviewMsg}
-                onChange={(event) => setReviewMsg(event.target.value)}
-                placeholder="Write a review..."
-              />
-              <Button
-                onClick={handleAddReview}
-                disabled={reviewMsg.trim() === ""}
-              >
-                Submit
-              </Button>
             </div>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+    <GuestAccessDialog open={showGuestDialog} onOpenChange={setShowGuestDialog} />
+    </>
   );
 }
 

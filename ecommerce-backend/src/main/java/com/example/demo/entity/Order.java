@@ -2,6 +2,8 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -16,6 +18,9 @@ public class Order {
     private Long cartId;
 
     private Long addressId;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
 
     private String orderStatus;
 
@@ -65,13 +70,34 @@ public class Order {
 		this.addressId = addressId;
 	}
 
-	public String getOrderStatus() {
-		return orderStatus;
-	}
+    public List<OrderItem> getItems() {
+        return items;
+    }
 
-	public void setOrderStatus(String orderStatus) {
-		this.orderStatus = orderStatus;
-	}
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+        if (items != null) {
+            items.forEach(item -> item.setOrder(this));
+        }
+    }
+
+    public void addItem(OrderItem item) {
+        item.setOrder(this);
+        this.items.add(item);
+    }
+
+    public void removeItem(OrderItem item) {
+        item.setOrder(null);
+        this.items.remove(item);
+    }
+
+    public String getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(String orderStatus) {
+        this.orderStatus = orderStatus;
+    }
 
 	public String getPaymentMethod() {
 		return paymentMethod;

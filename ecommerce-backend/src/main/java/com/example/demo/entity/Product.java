@@ -1,10 +1,11 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -15,7 +16,13 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String image;
+	@Column(length = 2048)
+	private String image;
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
+	@Column(name = "size")
+	private List<String> sizes = new ArrayList<>();
 
     @Column(nullable = false)
     private String title;
@@ -50,6 +57,7 @@ public class Product {
 		super();
 		this.id = id;
 		this.image = image;
+		// sizes left as default empty list for backwards compatibility
 		this.title = title;
 		this.description = description;
 		this.category = category;
@@ -87,6 +95,14 @@ public class Product {
 
 	public void setImage(String image) {
 		this.image = image;
+	}
+
+	public List<String> getSizes() {
+		return sizes;
+	}
+
+	public void setSizes(List<String> sizes) {
+		this.sizes = sizes == null ? new ArrayList<>() : sizes;
 	}
 
 	public String getTitle() {

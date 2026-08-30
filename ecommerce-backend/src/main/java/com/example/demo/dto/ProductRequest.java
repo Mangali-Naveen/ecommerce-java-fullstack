@@ -1,9 +1,13 @@
 package com.example.demo.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.ArrayList;
+import jakarta.validation.constraints.Size;
 
 public class ProductRequest {
 
+    @Size(max = 2048, message = "Image URL must be 2048 characters or less.")
     private String image;
     private String title;
     private String description;
@@ -12,6 +16,7 @@ public class ProductRequest {
     private BigDecimal price;
     private BigDecimal salePrice;
     private Integer totalStock;
+    private List<String> sizes = new ArrayList<>();
 
     public String getImage() {
         return image;
@@ -75,5 +80,13 @@ public class ProductRequest {
 
     public void setTotalStock(Integer totalStock) {
         this.totalStock = totalStock;
+    }
+
+    public List<String> getSizes() {
+        return sizes;
+    }
+
+    public void setSizes(List<String> sizes) {
+        this.sizes = sizes == null ? new ArrayList<>() : sizes;
     }
 }

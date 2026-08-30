@@ -1,5 +1,18 @@
 import axios from "axios";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { buildApiUrl } from "@/config";
+
+const normalizeCartPayload = (cartPayload = {}) => ({
+  ...cartPayload,
+  items: (cartPayload?.items || []).map((item) => ({
+    ...item,
+    productId: item.product?.id,
+    title: item.product?.title || item.title,
+    image: item.product?.image || item.image,
+    price: item.product?.price ?? item.price,
+    salePrice: item.product?.salePrice ?? item.salePrice,
+  })),
+});
 
 const initialState = {
   cartItems: {
@@ -12,7 +25,7 @@ export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async ({ userId, productId, quantity }) => {
     const response = await axios.post(
-      "http://localhost:8181/api/cart/add",
+      buildApiUrl("/api/cart/add"),
       {
         userId,
         productId,
@@ -28,7 +41,7 @@ export const fetchCartItems = createAsyncThunk(
   "cart/fetchCartItems",
   async (userId) => {
     const response = await axios.get(
-      `http://localhost:8181/api/cart/${userId}`
+      buildApiUrl(`/api/cart/${userId}`)
     );
 
     return response.data;
@@ -39,7 +52,7 @@ export const deleteCartItem = createAsyncThunk(
   "cart/deleteCartItem",
   async ({ userId, productId }) => {
     const response = await axios.delete(
-      `http://localhost:8181/api/cart/${userId}/${productId}`
+      buildApiUrl(`/api/cart/${userId}/${productId}`)
     );
 
     return response.data;
@@ -50,7 +63,7 @@ export const updateCartQuantity = createAsyncThunk(
   "cart/updateCartQuantity",
   async ({ userId, productId, quantity }) => {
     const response = await axios.put(
-      "http://localhost:8181/api/cart/update",
+      buildApiUrl("/api/cart/update"),
       {
         userId,
         productId,
@@ -65,7 +78,14 @@ export const updateCartQuantity = createAsyncThunk(
 const shoppingCartSlice = createSlice({
   name: "shoppingCart",
   initialState,
-  reducers: {},
+  reducers: {
+    clearCart: (state) => {
+      state.cartItems = {
+        items: [],
+      };
+      state.isLoading = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(addToCart.pending, (state) => {
@@ -83,13 +103,7 @@ const shoppingCartSlice = createSlice({
       })
       .addCase(fetchCartItems.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.cartItems = {
-          ...action.payload.data,
-          items: action.payload.data?.items?.map(item => ({
-            ...item,
-            productId: item.product?.id
-          })) || []
-        };
+        state.cartItems = normalizeCartPayload(action.payload?.data);
       })
       .addCase(fetchCartItems.rejected, (state) => {
         state.isLoading = false;
@@ -100,13 +114,7 @@ const shoppingCartSlice = createSlice({
       })
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.cartItems = {
-          ...action.payload.data,
-          items: action.payload.data?.items?.map(item => ({
-            ...item,
-            productId: item.product?.id
-          })) || []
-        };
+        state.cartItems = normalizeCartPayload(action.payload?.data);
       })
       .addCase(updateCartQuantity.rejected, (state) => {
         state.isLoading = false;
@@ -117,13 +125,7 @@ const shoppingCartSlice = createSlice({
       })
       .addCase(deleteCartItem.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.cartItems = {
-          ...action.payload.data,
-          items: action.payload.data?.items?.map(item => ({
-            ...item,
-            productId: item.product?.id
-          })) || []
-        };
+        state.cartItems = normalizeCartPayload(action.payload?.data);
       })
 
       .addCase(deleteCartItem.rejected, (state) => {
@@ -135,5 +137,5 @@ const shoppingCartSlice = createSlice({
   },
 });
 
-
+export const { clearCart } = shoppingCartSlice.actions;
 export default shoppingCartSlice.reducer;

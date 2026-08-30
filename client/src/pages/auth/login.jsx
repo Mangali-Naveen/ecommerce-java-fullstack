@@ -2,9 +2,9 @@ import CommonForm from "@/components/common/form";
 import { useToast } from "@/components/ui/use-toast";
 import { loginFormControls } from "@/config";
 import { loginUser } from "@/store/auth-slice";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const initialState = {
   email: "",
@@ -16,22 +16,30 @@ function AuthLogin() {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.message) {
+      toast({ title: location.state.message });
+    }
+  }, [location.state?.message, toast]);
 
   function onSubmit(event) {
     event.preventDefault();
-
     dispatch(loginUser(formData)).then((data) => {
       if (data?.payload?.success) {
-        toast({
-          title: data?.payload?.message,
-        });
+        const redirectTo = location.state?.from;
 
-        navigate("/shop/home");
-      } else {
-        toast({
-          title: data?.payload?.message,
-          variant: "destructive",
-        });
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+          return;
+        }
+
+        if (data?.payload?.user?.role === "ADMIN") {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/shop/home", { replace: true });
+        }
       }
     });
   }

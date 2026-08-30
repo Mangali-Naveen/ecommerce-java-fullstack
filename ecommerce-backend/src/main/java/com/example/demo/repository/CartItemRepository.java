@@ -6,4 +6,5 @@ import com.example.demo.entity.CartItem;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
+	boolean existsByProduct_Id(Long productId);
 }

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { buildApiUrl } from "@/config";
 
 const initialState = {
   isLoading: false,
@@ -8,9 +9,11 @@ const initialState = {
 
 export const getSearchResults = createAsyncThunk(
   "/order/getSearchResults",
-  async (keyword) => {
+  async (keyword, { signal }) => {
+    const trimmedKeyword = keyword.trim();
     const response = await axios.get(
-      `http://localhost:8181/api/shop/search/${keyword}`
+      buildApiUrl(`/api/shop/search/${encodeURIComponent(trimmedKeyword)}`),
+      { signal }
     );
 
     return response.data;

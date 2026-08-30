@@ -1,6 +1,7 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import CommonForm from "../common/form";
-import { DialogContent } from "../ui/dialog";
+import { DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
@@ -11,6 +12,7 @@ import {
   updateOrderStatus,
 } from "@/store/admin/order-slice";
 import { useToast } from "../ui/use-toast";
+import { formatINR } from "@/lib/utils";
 
 const initialFormData = {
   status: "",
@@ -22,17 +24,15 @@ function AdminOrderDetailsView({ orderDetails }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
 
-  console.log(orderDetails, "orderDetailsorderDetails");
-
   function handleUpdateStatus(event) {
     event.preventDefault();
     const { status } = formData;
 
     dispatch(
-      updateOrderStatus({ id: orderDetails?._id, orderStatus: status })
+      updateOrderStatus({ id: orderDetails?.id, orderStatus: status })
     ).then((data) => {
       if (data?.payload?.success) {
-        dispatch(getOrderDetailsForAdmin(orderDetails?._id));
+        dispatch(getOrderDetailsForAdmin(orderDetails?.id));
         dispatch(getAllOrdersForAdmin());
         setFormData(initialFormData);
         toast({
@@ -44,11 +44,15 @@ function AdminOrderDetailsView({ orderDetails }) {
 
   return (
     <DialogContent className="sm:max-w-[600px]">
+      <DialogTitle className="sr-only">Order Details</DialogTitle>
+      <DialogDescription className="sr-only">
+        View order information, payment status, items, shipping details, and update the order status.
+      </DialogDescription>
       <div className="grid gap-6">
         <div className="grid gap-2">
           <div className="flex mt-6 items-center justify-between">
             <p className="font-medium">Order ID</p>
-            <Label>{orderDetails?._id}</Label>
+            <Label>{orderDetails?.id}</Label>
           </div>
           <div className="flex mt-2 items-center justify-between">
             <p className="font-medium">Order Date</p>
@@ -56,7 +60,7 @@ function AdminOrderDetailsView({ orderDetails }) {
           </div>
           <div className="flex mt-2 items-center justify-between">
             <p className="font-medium">Order Price</p>
-            <Label>${orderDetails?.totalAmount}</Label>
+            <Label>{formatINR(orderDetails?.totalAmount)}</Label>
           </div>
           <div className="flex mt-2 items-center justify-between">
             <p className="font-medium">Payment method</p>
@@ -89,11 +93,14 @@ function AdminOrderDetailsView({ orderDetails }) {
             <div className="font-medium">Order Details</div>
             <ul className="grid gap-3">
               {orderDetails?.cartItems && orderDetails?.cartItems.length > 0
-                ? orderDetails?.cartItems.map((item) => (
-                    <li className="flex items-center justify-between">
+                ? orderDetails?.cartItems.map((item, index) => (
+                    <li
+                      key={item.id ?? item.productId ?? index}
+                      className="flex items-center justify-between"
+                    >
                       <span>Title: {item.title}</span>
                       <span>Quantity: {item.quantity}</span>
-                      <span>Price: ${item.price}</span>
+                      <span>Price: {formatINR(item.price)}</span>
                     </li>
                   ))
                 : null}
@@ -140,5 +147,32 @@ function AdminOrderDetailsView({ orderDetails }) {
     </DialogContent>
   );
 }
+
+AdminOrderDetailsView.propTypes = {
+  orderDetails: PropTypes.shape({
+    id: PropTypes.number,
+    orderDate: PropTypes.string,
+    totalAmount: PropTypes.number,
+    paymentMethod: PropTypes.string,
+    paymentStatus: PropTypes.string,
+    orderStatus: PropTypes.string,
+    cartItems: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        productId: PropTypes.number,
+        title: PropTypes.string,
+        quantity: PropTypes.number,
+        price: PropTypes.number,
+      })
+    ),
+    addressInfo: PropTypes.shape({
+      address: PropTypes.string,
+      city: PropTypes.string,
+      pincode: PropTypes.string,
+      phone: PropTypes.string,
+      notes: PropTypes.string,
+    }),
+  }),
+};
 
 export default AdminOrderDetailsView;
