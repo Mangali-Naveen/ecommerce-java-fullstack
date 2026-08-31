@@ -1,5 +1,7 @@
 package com.example.demo.security;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +11,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
@@ -26,65 +31,168 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {
-                })
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session
-                        -> session.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**")
-                .permitAll()
-                // Feature endpoints: allow anyone to read features, but only ADMIN can add
-                .requestMatchers(HttpMethod.GET, "/api/common/feature/get")
-                .permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/common/feature/add")
-                .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/common/feature/update/**")
-                .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/common/feature/delete/**")
-                .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/common/feature/upload-image")
-                .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/uploads/banner-images/**")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/shop/**")
-                .permitAll()
-                .requestMatchers("/api/admin/**")
-                .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/cart/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/cart/add")
-                .authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/cart/update")
-                .authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/cart/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/wishlist/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/wishlist/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/wishlist/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/address/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/address/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/address/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/address/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/order/**")
-                .authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/order/**")
-                .authenticated()
-                .anyRequest()
-                .authenticated()
+
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
+
+                        // Feature endpoints
+                        // Anyone can read features, only ADMIN can modify
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/common/feature/get")
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/common/feature/add")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/common/feature/update/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/common/feature/delete/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/common/feature/upload-image")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/uploads/banner-images/**")
+                        .permitAll()
+
+                        // Shopping/product GET APIs are public
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/shop/**")
+                        .permitAll()
+
+                        // Admin APIs
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        // Cart APIs
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/cart/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/cart/add")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/cart/update")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/cart/**")
+                        .authenticated()
+
+                        // Wishlist APIs
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/wishlist/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/wishlist/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/wishlist/**")
+                        .authenticated()
+
+                        // Address APIs
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/address/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/address/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/address/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/address/**")
+                        .authenticated()
+
+                        // Order APIs
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/order/**")
+                        .authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/order/**")
+                        .authenticated()
+
+                        .anyRequest()
+                        .authenticated()
                 );
 
         // Ensure JWT filter runs before username/password filter
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+                jwtFilter,
+                UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(List.of(
+                "https://shopnest-frontend-s2kw.onrender.com"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
+        return source;
     }
 }
